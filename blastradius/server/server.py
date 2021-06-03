@@ -3,6 +3,7 @@ import os
 import subprocess
 import itertools
 import json
+import pathlib
 
 # 3rd-party libraries
 from flask import Flask
@@ -12,7 +13,6 @@ import jinja2
 
 # 1st-party libraries
 from blastradius.handlers.dot import DotGraph, Format, DotNode
-from blastradius.handlers.terraform import Terraform
 from blastradius.util import which
 from blastradius.graph import Node, Edge, Counter, Graph
 
@@ -21,19 +21,15 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     # we need terraform, graphviz, and an init-ed terraform project.
-    if not which('terraform') and not which('terraform.exe'):
-        return render_template('error.html')
-    elif not which('dot') and not which('dot.exe'):
-        return render_template('error.html')
-    elif not os.path.exists('.terraform'):
+    if not which('dot') and not which('dot.exe'):
         return render_template('error.html')
     else:
-        return render_template('index.html', help=get_help())
+        return render_template('index.html')
 
 @app.route('/graph.svg')
 def graph_svg():
     Graph.reset_counters()
-    dot = DotGraph('', file_contents=run_tf_graph())
+    dot = DotGraph('', file_contents=pathlib.Path(app.config['dotfile']).read_text())
 
     module_depth = request.args.get('module_depth', default=None, type=int)
     refocus      = request.args.get('refocus', default=None, type=str)
@@ -52,15 +48,14 @@ def graph_svg():
 @app.route('/graph.json')
 def graph_json():
     Graph.reset_counters()
-    dot = DotGraph('', file_contents=run_tf_graph())
+    dot = DotGraph('', file_contents=pathlib.Path(app.config['dotfile']).read_text())
     module_depth = request.args.get('module_depth', default=None, type=int)
     refocus      = request.args.get('refocus', default=None, type=str)
     if module_depth is not None and module_depth >= 0:
-        dot.set_module_depth(module_depth)
+        dot.set_module_depth(module_depth) 
 
-    tf = Terraform(os.getcwd())
     for node in dot.nodes:
-        node.definition = tf.get_def(node)
+        node.definition = ''
 
     if refocus is not None:
         node = dot.get_node_by_name(refocus)
@@ -68,28 +63,3 @@ def graph_json():
             dot.center(node)
 
     return dot.json()
-
-def run_tf_graph():
-    completed = subprocess.run(['terraform', 'graph'], stdout=subprocess.PIPE)
-    if completed.returncode != 0:
-        raise Exception('Execution error', completed.stderr)
-    return completed.stdout.decode('utf-8')
-
-def get_help():
-    return { 'tf_version' : get_terraform_version(),
-             'tf_exe'   : get_terraform_exe(),
-             'cwd'        : os.getcwd() }
-
-def get_terraform_version():
-    completed = subprocess.run(['terraform', '--version'], stdout=subprocess.PIPE)
-    if completed.returncode != 0:
-        raise
-    return completed.stdout.decode('utf-8').splitlines()[0].split(' ')[-1]
-
-def get_terraform_exe():
-    return which('terraform')
-
-
-
-
-
