@@ -26,9 +26,9 @@ class Graph:
     def svg(self):
         'returns an svg representation of the graph (via graphviz/dot)'
         dot_str = self.dot()
-        completed = subprocess.run(['dot', '-Tsvg'], input=dot_str.encode('utf-8'), stdout=subprocess.PIPE)
+        completed = subprocess.run(['dot', '-Tsvg'], input=dot_str.encode('utf-8'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if completed.returncode != 0:
-            raise
+            raise completed.stderr.decode('utf-8')
         return completed.stdout.decode('utf-8')
 
     def json(self):
@@ -48,12 +48,12 @@ digraph {
     node [fontname = "courier new",fontsize=8];
     edge [fontname = "courier new",fontsize=8];
     subgraph "root" {
-        {% for node in nodes %}
+        {%- for node in nodes -%}
             "{{node.label}}" {% if node.fmt %} [{{node.fmt}}] {% endif %}
-        {% endfor %}
-        {% for edge in edges %}
+        {% endfor -%}
+        {%- for edge in edges -%}
             "{{edge.source}}" -> "{{edge.target}}" {% if edge.fmt %} [{{edge.fmt}}] {% endif %}
-        {% endfor %}
+        {% endfor -%}
     }
 }
 """

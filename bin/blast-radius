@@ -40,7 +40,7 @@ def main():
         app.run(host='127.0.0.1',port=args.port)
         sys.exit(0)
     
-    elif args.json or args.dot or args.svg:
+    elif args.dot or args.svg:
         if args.graph is sys.stdin:
             dot = DotGraph('', file_contents=sys.stdin.read())
         else:

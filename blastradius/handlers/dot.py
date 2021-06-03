@@ -317,51 +317,47 @@ digraph {
     node [fontname = "courier new",fontsize=8];
     edge [fontname = "courier new",fontsize=8];
 
-    {# just the root module #}
-    {% for cluster in clusters %}
+    {#- just the root module -#}
+    {%- for cluster in clusters %}
         subgraph "{{cluster}}" {
             style=invis;
-            {% for node in nodes %}
-                {% if node.cluster == cluster and node.module == 'root' %}
+            {% for node in nodes -%}
+                {%- if node.cluster == cluster and node.module == 'root' -%}
                     {% if node.type %}
                     "{{node.label}}" [ shape=none, margin=0, id={{node.svg_id}} label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
                             <TR><TD>{{node.type}}</TD></TR>
                             <TR><TD>{{node.resource_name}}</TD></TR>
                         </TABLE>>];
-                    {% else %}
-                        "{{node.label}}" [{{node.fmt}}]
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
+                    {% else -%}
+                        "{{node.label.strip(' "')}}" [{{node.fmt}}]
+                    {% endif -%}
+                {% endif -%}
+            {% endfor -%}
         }
-    {% endfor %}
-
-    {# non-root modules #}
-    {% for node in nodes %}
-        {% if node.module != 'root' %}
-
-            {% if node.collapsed %}
+    {% endfor -%}
+    {#- non-root modules -#}
+    {%- for node in nodes %}
+        {%- if node.module != 'root' -%}
+            {%- if node.collapsed -%}
                 "{{node.label}}" [ shape=none, margin=0, id={{node.svg_id}} label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
                 {% for module in node.modules %}<TR><TD>(M) {{module}}</TD></TR>{% endfor %}
                 <TR><TD>(collapsed)</TD></TR>
                 <TR><TD>...</TD></TR>
                </TABLE>>];
-            {% else %}
+            {%- else %}
             "{{node.label}}" [ shape=none, margin=0, id={{node.svg_id}} label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
                 {% for module in node.modules %}<TR><TD>(M) {{module}}</TD></TR>{% endfor %}
                 <TR><TD>{{node.type}}</TD></TR>
                 <TR><TD>{{node.resource_name}}</TD></TR>
                 </TABLE>>];
-            {% endif %}
-        {% endif %}
-
-    {% endfor %}
-
-        {% for edge in edges %}
-            {% if edge.edge_type == EdgeType.NORMAL %}"{{edge.source}}" -> "{{edge.target}}" {% if edge.fmt %} [{{edge.fmt}}] {% endif %}{% endif %}
-            {% if edge.edge_type == EdgeType.LAYOUT_SHOWN %}"{{edge.source}}" -> "{{edge.target}}" {% if edge.fmt %} [{{edge.fmt}}] {% endif %}{% endif %}
-            {% if edge.edge_type == EdgeType.LAYOUT_HIDDEN %}"{{edge.source}}" -> "{{edge.target}}" [style="invis"]{% endif %}
-        {% endfor %}
+            {% endif -%}
+        {% endif -%}
+    {% endfor -%}
+        {%- for edge in edges %}
+            {%- if edge.edge_type == EdgeType.NORMAL %}"{{edge.source}}" -> "{{edge.target.strip(' "')}}" {% if edge.fmt %} [{{edge.fmt}}] {% endif %}{% endif %}
+            {%- if edge.edge_type == EdgeType.LAYOUT_SHOWN %}"{{edge.source}}" -> "{{edge.target.strip(' "')}}" {% if edge.fmt %} [{{edge.fmt}}] {% endif %}{% endif %}
+            {%- if edge.edge_type == EdgeType.LAYOUT_HIDDEN %}"{{edge.source}}" -> "{{edge.target.strip(' "')}}" [style="invis"]{% endif %}
+        {% endfor -%}
 }
 """
     dot_template = jinja2.Environment(loader=jinja2.BaseLoader()).from_string(dot_template_str)
@@ -451,10 +447,10 @@ class DotNode(Node):
         try:
             if not re.match(r'(\[root\]\s+)*module\..*', label):
                 return 'root'
-            m = re.match(r'(\[root\]\s+)*(?P<module>\S+)\.(?P<type>\S+)\.\S+', label)
+            m = re.match(r'(\[root\]\s+)*(?P<module>\S+)\.(?P<type>\S+)(\.\S+)?', label)
             return m.groupdict()['module']
         except:
-            raise Exception("None: ", label)
+            raise Exception("Failed to parse ", label)
 
     @staticmethod
     def _label_to_modules(label):
