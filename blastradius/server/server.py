@@ -31,7 +31,7 @@ def graph_svg():
     Graph.reset_counters()
     dot = DotGraph('', file_contents=pathlib.Path(app.config['dotfile']).read_text())
 
-    module_depth = request.args.get('module_depth', default=None, type=int)
+    module_depth = request.args.get('module_depth', default=app.config['module_depth'], type=int)
     refocus      = request.args.get('refocus', default=None, type=str)
 
     if module_depth is not None and module_depth >= 0:
@@ -49,7 +49,7 @@ def graph_svg():
 def graph_json():
     Graph.reset_counters()
     dot = DotGraph('', file_contents=pathlib.Path(app.config['dotfile']).read_text())
-    module_depth = request.args.get('module_depth', default=None, type=int)
+    module_depth = request.args.get('module_depth', default=app.config['module_depth'], type=int)
     refocus      = request.args.get('refocus', default=None, type=str)
     if module_depth is not None and module_depth >= 0:
         dot.set_module_depth(module_depth) 

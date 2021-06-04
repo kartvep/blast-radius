@@ -29,7 +29,7 @@ def main():
 
     # options to limit, re-focus, and re-center presentation of larger graphs.
     constraint_group = parser.add_mutually_exclusive_group()
-    constraint_group.add_argument('--module-depth', type=int, help='hide module details', required=False)
+    constraint_group.add_argument('--module-depth', type=int, help='hide module details', default=None)
     constraint_group.add_argument('--focus', type=str, help='', required=False)
     constraint_group.add_argument('--center', type=str, help='', required=False)
 
@@ -37,6 +37,7 @@ def main():
 
     if args.serve:
         app.config['dotfile'] = args.dotfile
+        app.config['module_depth'] = args.module_depth
         app.run(host='127.0.0.1',port=args.port)
         sys.exit(0)
     
